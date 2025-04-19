@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Body, Query, Request, Depends
+from fastapi import APIRouter, HTTPException, Body, Request
 from fastapi.responses import HTMLResponse, FileResponse
 from fastapi.templating import Jinja2Templates
-from typing import Dict, List, Optional
+from typing import Dict, List
 from app.models.egg import Egg, EggType, EggSize
 from app.models.customer import Customer, CustomerType
 from app.models.sale import Sale, SaleItem, SaleUnitType
@@ -27,12 +27,10 @@ async def sales_page(request: Request):
 @router.post("/api/customers")
 async def create_customer(customer: Customer):
     """Create a new customer"""
-    # Check if customer already exists
     existing = db.get_customer(customer.document_number)
     if existing:
         return {"id": existing.get("id"), "message": "Customer already exists"}
     
-    # Create new customer
     customer_dict = customer.dict()
     customer_dict["id"] = str(uuid.uuid4())
     customer_id = db.create_customer(customer_dict)
@@ -53,12 +51,10 @@ async def create_sale(
     items: List[Dict] = Body(...)
 ):
     """Create a new sale with validation rules"""
-    # Get the customer
     customer = db.get_customer(customer_document)
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
     
-    # Validate the sale based on customer type
     sale_items = []
     subtotal = 0.0
     
@@ -68,30 +64,25 @@ async def create_sale(
         quantity = item["quantity"]
         unit_type = item["unit_type"]
         
-        # Validate unit type based on customer type
         if customer["customer_type"] == CustomerType.JURIDICAL and unit_type != SaleUnitType.CUBETA:
             raise HTTPException(
                 status_code=400, 
                 detail="Juridical customers can only purchase by cubeta"
             )
         
-        # Get egg inventory and validate stock
         egg = db.get_egg(egg_type, egg_size)
         if not egg:
             raise HTTPException(status_code=404, detail=f"Egg type {egg_type} {egg_size} not found")
         
-        # Calculate eggs quantity being sold
         eggs_per_unit = 30 if unit_type == SaleUnitType.CUBETA else 12
         total_eggs = quantity * eggs_per_unit
         
-        # Check if enough stock
         if egg["stock"] < total_eggs:
             raise HTTPException(
                 status_code=400, 
                 detail=f"Not enough stock for {egg_type} {egg_size} eggs. Available: {egg['stock']}, Requested: {total_eggs}"
             )
         
-        # Calculate price
         egg_model = Egg(type=egg_type, size=egg_size, stock=egg["stock"])
         unit_price = egg_model.get_price_per_cubeta() if unit_type == SaleUnitType.CUBETA else egg_model.get_price_per_dozen()
         item_subtotal = unit_price * quantity
@@ -106,15 +97,11 @@ async def create_sale(
         ).dict())
         
         subtotal += item_subtotal
-        
-        # Update inventory by reducing stock
         db.update_egg_stock(egg_type, egg_size, -total_eggs)
     
-    # Calculate totals
-    iva = subtotal * 0.05  # 5% IVA
+    iva = subtotal * 0.05
     total = subtotal + iva
     
-    # Create sale record
     sale = Sale(
         customer_id=customer["id"],
         customer_name=customer["name"],
@@ -125,10 +112,7 @@ async def create_sale(
         total=total
     )
     
-    # Save to database
     sale_id = db.create_sale(sale.dict())
-    
-    # Generate invoice
     invoice_path = generate_invoice(sale.dict())
     
     return {
@@ -152,12 +136,10 @@ async def get_invoice(sale_id: str):
     if not sale:
         raise HTTPException(status_code=404, detail="Sale not found")
     
-    # The invoice path follows a naming convention
     invoice_filename = f"invoice_{sale_id}.txt"
     invoice_path = os.path.join("invoices", invoice_filename)
     
     if not os.path.exists(invoice_path):
-        # Generate the invoice if it doesn't exist
         invoice_path = generate_invoice(sale)
     
     return FileResponse(

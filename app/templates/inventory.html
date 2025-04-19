@@ -1,9 +1,4 @@
-
-
-
-    <link rel="stylesheet" href="../static/styles/inventory.css">
-
-
+<link rel="stylesheet" href="../static/styles/inventory.css">
 
 <div class="container">
     <h2 class="mb-4">Gestión de Inventario de Huevos</h2>
@@ -14,11 +9,11 @@
             <h4>Registrar Huevos</h4>
         </div>
         <div class="card-body">
-            <form id="addEggsForm">
+            <form id="addEggsForm" action="/api/inventory/add" method="post">
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="eggType" class="form-label">Tipo de Huevo</label>
-                        <select class="form-select" id="eggType" required>
+                        <select class="form-select" id="eggType" name="egg_type" required>
                             <option value="">Seleccionar...</option>
                             <option value="red">Rojo</option>
                             <option value="white">Blanco</option>
@@ -26,7 +21,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="eggSize" class="form-label">Tamaño</label>
-                        <select class="form-select" id="eggSize" required>
+                        <select class="form-select" id="eggSize" name="egg_size" required>
                             <option value="">Seleccionar...</option>
                             <option value="A">A</option>
                             <option value="AA">AA</option>
@@ -36,7 +31,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="quantity" class="form-label">Cantidad</label>
-                        <input type="number" class="form-control" id="quantity" min="1" required>
+                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">Agregar al Inventario</button>
@@ -63,59 +58,6 @@
     </div>
 </div>
 
-<!-- Modal for Success Message -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">Operación Exitosa</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p id="successMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal for Error Message -->
-<div class="modal fade" id="errorModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">Error</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p id="errorMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Notificaciones emergentes -->
-<div id="notification-success" class="notification-container">
-    <div class="notification success">
-        <strong>Éxito</strong>
-        <p id="notif-success-msg">Los huevos fueron registrados correctamente.</p>
-        <button onclick="hideNotification('notification-success')" class="btn btn-sm btn-secondary">Cerrar</button>
-    </div>
-</div>
-
-<div id="notification-error" class="notification-container">
-    <div class="notification error">
-        <strong>Error</strong>
-        <p id="notif-error-msg">Ocurrió un error al registrar el inventario.</p>
-        <button onclick="hideNotification('notification-error')" class="btn btn-sm btn-secondary">Cerrar</button>
-    </div>
-</div>
-
 <script>
     // Function to load inventory data
     function loadInventory() {
@@ -125,25 +67,18 @@
                 const inventoryContainer = document.getElementById('inventoryContainer');
                 const inventoryAlert = document.getElementById('inventoryAlert');
                 
-                // Clear existing content
                 inventoryContainer.innerHTML = '';
                 
                 if (data && data.length > 0) {
-                    // Hide the alert
                     inventoryAlert.style.display = 'none';
                     
-                    // Create cards for each egg type/size
                     data.forEach(egg => {
-                        const cardClass = egg.type === 'red' ? 'egg-red' : 'egg-white';
                         const cardHtml = `
                             <div class="col-md-3 mb-4">
-                                <div class="egg-card ${cardClass}">
-                                    <h5>Huevo ${egg.type === 'red' ? 'Rojo' : 'Blanco'} ${egg.size}</h5>
-                                    <p><strong>Stock:</strong> ${egg.stock} unidades</p>
-                                    <p><strong>Cubetas:</strong> ${Math.floor(egg.stock / 30)} (${egg.stock % 30} huevos sueltos)</p>
-                                    <p><strong>Docenas:</strong> ${Math.floor(egg.stock / 12)} (${egg.stock % 12} huevos sueltos)</p>
-                                    
-                                    <div class="mt-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5>Huevo ${egg.type === 'red' ? 'Rojo' : 'Blanco'} ${egg.size}</h5>
+                                        <p><strong>Stock:</strong> ${egg.stock} unidades</p>
                                         <div class="input-group">
                                             <input type="number" class="form-control form-control-sm update-stock" 
                                                 data-type="${egg.type}" data-size="${egg.size}" 
@@ -159,8 +94,7 @@
                         `;
                         inventoryContainer.innerHTML += cardHtml;
                     });
-                    
-                    // Add event listeners to update buttons
+
                     document.querySelectorAll('.update-btn').forEach(button => {
                         button.addEventListener('click', function() {
                             const eggType = this.getAttribute('data-type');
@@ -171,20 +105,18 @@
                             updateEggStock(eggType, eggSize, newStock);
                         });
                     });
-                    
                 } else {
-                    // Show the alert if no data
-                    inventoryAlert.textContent = 'No hay huevos en el inventario. Utilice el formulario para agregar.';
+                    inventoryAlert.textContent = 'No hay huevos en el inventario.';
                     inventoryAlert.style.display = 'block';
                 }
             })
             .catch(error => {
                 console.error('Error loading inventory:', error);
-                document.getElementById('inventoryAlert').textContent = 'Error al cargar el inventario. Por favor, intente nuevamente.';
-                document.getElementById('inventoryAlert').className = 'alert alert-danger mb-4';
+                inventoryAlert.textContent = 'Error al cargar el inventario.';
+                inventoryAlert.className = 'alert alert-danger mb-4';
             });
     }
-    
+
     // Function to add eggs to inventory
     function addEggs(eggType, eggSize, quantity) {
         fetch('/api/inventory/add', {
@@ -192,36 +124,18 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                egg_type: eggType,
-                egg_size: eggSize,
-                quantity: quantity
-            }),
+            body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, quantity: quantity }),
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.detail || 'Error al agregar huevos'); });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            // Show success message
-            document.getElementById('successMessage').textContent = data.message;
-            new bootstrap.Modal(document.getElementById('successModal')).show();
-            
-            // Reload inventory
+            alert(data.message);
             loadInventory();
-            
-            // Reset form
-            document.getElementById('addEggsForm').reset();
         })
         .catch(error => {
-            // Show error message
-            document.getElementById('errorMessage').textContent = error.message;
-            new bootstrap.Modal(document.getElementById('errorModal')).show();
+            alert('Error al agregar huevos: ' + error.message);
         });
     }
-    
+
     // Function to update egg stock
     function updateEggStock(eggType, eggSize, newStock) {
         fetch('/api/inventory/update', {
@@ -229,68 +143,27 @@
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                egg_type: eggType,
-                egg_size: eggSize,
-                new_stock: newStock
-            }),
+            body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, new_stock: newStock }),
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => { throw new Error(err.detail || 'Error al actualizar el inventario'); });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            // Show success message
-            document.getElementById('successMessage').textContent = data.message;
-            new bootstrap.Modal(document.getElementById('successModal')).show();
-            
-            // Reload inventory
+            alert(data.message);
             loadInventory();
         })
         .catch(error => {
-            // Show error message
-            document.getElementById('errorMessage').textContent = error.message;
-            new bootstrap.Modal(document.getElementById('errorModal')).show();
+            alert('Error al actualizar el inventario: ' + error.message);
         });
     }
-    
+
     // Event listener for form submission
     document.getElementById('addEggsForm').addEventListener('submit', function(event) {
         event.preventDefault();
-        
         const eggType = document.getElementById('eggType').value;
         const eggSize = document.getElementById('eggSize').value;
         const quantity = parseInt(document.getElementById('quantity').value);
-        
         addEggs(eggType, eggSize, quantity);
     });
-    
+
     // Load inventory when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        loadInventory();
-    });
-    // Mostrar notificación emergente
-function showNotification(id, message) {
-    const el = document.getElementById(id);
-    if (el) {
-        const msgEl = el.querySelector('p');
-        if (msgEl) msgEl.textContent = message;
-
-        el.classList.add('active');
-        setTimeout(() => {
-            el.classList.remove('active');
-        }, 5000); // Se oculta automáticamente
-    }
-}
-
-// Ocultar notificación manual
-function hideNotification(id) {
-    const el = document.getElementById(id);
-    if (el) {
-        el.classList.remove('active');
-    }
-}
-
+    document.addEventListener('DOMContentLoaded', loadInventory);
 </script>

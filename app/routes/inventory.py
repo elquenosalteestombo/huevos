@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException, Body, Query, Request
+from fastapi import APIRouter, HTTPException, Body, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import Dict, List, Optional
+from typing import Dict, List
 from app.models.egg import Egg, EggType, EggSize
 from app.database.mongodb import MongoDB
 
@@ -41,15 +41,12 @@ async def add_eggs(
     if quantity <= 0:
         raise HTTPException(status_code=400, detail="Quantity must be positive")
     
-    # Get current egg record or create a new one
     egg = db.get_egg(egg_type, egg_size)
     if egg:
-        # Update existing egg inventory
         current_stock = egg.get("stock", 0)
         new_stock = current_stock + quantity
         success = db.update_egg_stock(egg_type, egg_size, quantity)
     else:
-        # Create new egg inventory
         egg_data = {
             "type": egg_type,
             "size": egg_size,
