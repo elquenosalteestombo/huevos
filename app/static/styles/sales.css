@@ -1,0 +1,341 @@
+/* app/static/styles/sales.css */
+
+:root {
+    --main-bg: #f5f4f1;
+    --accent: #6D4C41;
+    --accent-light: #8d6e63;
+    --light-accent: #c8beb7;
+    --text-color: #2c2c2c;
+    --text-light: #5a5a5a;
+    --card-bg: #fafafa;
+    --error-color: #d32f2f;
+    --success-color: #388e3c;
+    --info-color: #1976d2;
+    --warning-color: #ffa000;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.05);
+    --transition: all 0.3s ease;
+}
+
+/* Estructura principal */
+.container {
+    padding: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Encabezado */
+h2 {
+    color: var(--accent);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+/* Subtítulo */
+.subtitle {
+    color: var(--text-light);
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+}
+
+/* Tarjetas */
+.card {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 2rem;
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow);
+}
+
+.card-header {
+    background-color: var(--accent);
+    color: white;
+    border-radius: var(--radius) var(--radius) 0 0 !important;
+    padding: 1rem 1.5rem;
+    border-bottom: none;
+}
+
+.card-header.bg-light {
+    background-color: #f5f5f5 !important;
+    color: var(--text-color);
+}
+
+.card-header.bg-info {
+    background-color: var(--info-color) !important;
+}
+
+.card-header.bg-success {
+    background-color: var(--success-color) !important;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Formularios */
+.form-label {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.form-control, .form-select {
+    border: 1px solid #ddd;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: var(--transition);
+    background-color: white;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(109, 76, 65, 0.15);
+    outline: none;
+}
+
+.input-group .form-control {
+    border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.input-group .btn {
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+/* Botones */
+.btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn i {
+    font-size: 1.1rem;
+}
+
+.btn-primary {
+    background-color: var(--accent);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--accent-light);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: var(--light-accent);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: #b0a59b;
+    color: white;
+}
+
+.btn-danger {
+    background-color: var(--error-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c62828;
+    color: white;
+}
+
+.btn-outline-secondary {
+    background-color: transparent;
+    border: 1px solid var(--light-accent);
+    color: var(--text-color);
+}
+
+.btn-outline-secondary:hover {
+    background-color: rgba(200, 190, 183, 0.2);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.btn-lg {
+    padding: 1rem 2rem;
+    font-size: 1.1rem;
+}
+
+/* Filas de productos */
+.product-row {
+    margin-bottom: 1.5rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid #eee;
+    background-color: white;
+}
+
+.product-row .card-body {
+    padding: 1rem;
+}
+
+/* Tablas */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.table th {
+    background-color: #f5f5f5;
+    color: var(--text-color);
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #eee;
+}
+
+.table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+
+.table-sm th, .table-sm td {
+    padding: 0.5rem;
+}
+
+.table-borderless td, .table-borderless th {
+    border: none;
+}
+
+.text-end {
+    text-align: right;
+}
+
+/* Badges */
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 600;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 50rem;
+}
+
+.badge.bg-danger {
+    background-color: var(--error-color);
+}
+
+/* Alertas */
+.alert {
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.alert-warning {
+    background-color: rgba(255, 152, 0, 0.1);
+    color: var(--warning-color);
+    border-left: 4px solid var(--warning-color);
+}
+
+.alert-danger {
+    background-color: rgba(211, 47, 47, 0.1);
+    color: var(--error-color);
+    border-left: 4px solid var(--error-color);
+}
+
+/* Info de stock y precio */
+.stock-info, .price-info {
+    font-size: 0.9rem;
+}
+
+.stock-info.text-success {
+    color: var(--success-color);
+}
+
+.stock-info.text-danger {
+    color: var(--error-color);
+}
+
+.price-info strong {
+    color: var(--accent);
+}
+
+/* Modales */
+.modal-header {
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+.modal-header.bg-success {
+    background-color: var(--success-color) !important;
+    color: white;
+}
+
+.modal-header.bg-danger {
+    background-color: var(--error-color) !important;
+    color: white;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    border-top: none;
+    padding: 1rem 1.5rem;
+}
+
+/* Clases para huevos */
+.egg-red {
+    background-color: rgba(251, 234, 234, 0.3);
+}
+
+.egg-white {
+    background-color: rgba(232, 233, 235, 0.3);
+}
+
+/* Spinner */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+    border-width: 0.2em;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .btn {
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control, .form-select {
+        padding: 0.6rem 0.8rem;
+    }
+}

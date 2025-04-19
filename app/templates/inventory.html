@@ -1,4 +1,8 @@
-<!-- app/templates/inventory.html -->
+
+
+
+    <link rel="stylesheet" href="../static/styles/inventory.css">
+
 
 
 <div class="container">
@@ -92,6 +96,23 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Notificaciones emergentes -->
+<div id="notification-success" class="notification-container">
+    <div class="notification success">
+        <strong>Éxito</strong>
+        <p id="notif-success-msg">Los huevos fueron registrados correctamente.</p>
+        <button onclick="hideNotification('notification-success')" class="btn btn-sm btn-secondary">Cerrar</button>
+    </div>
+</div>
+
+<div id="notification-error" class="notification-container">
+    <div class="notification error">
+        <strong>Error</strong>
+        <p id="notif-error-msg">Ocurrió un error al registrar el inventario.</p>
+        <button onclick="hideNotification('notification-error')" class="btn btn-sm btn-secondary">Cerrar</button>
     </div>
 </div>
 
@@ -250,4 +271,26 @@
     document.addEventListener('DOMContentLoaded', function() {
         loadInventory();
     });
+    // Mostrar notificación emergente
+function showNotification(id, message) {
+    const el = document.getElementById(id);
+    if (el) {
+        const msgEl = el.querySelector('p');
+        if (msgEl) msgEl.textContent = message;
+
+        el.classList.add('active');
+        setTimeout(() => {
+            el.classList.remove('active');
+        }, 5000); // Se oculta automáticamente
+    }
+}
+
+// Ocultar notificación manual
+function hideNotification(id) {
+    const el = document.getElementById(id);
+    if (el) {
+        el.classList.remove('active');
+    }
+}
+
 </script>

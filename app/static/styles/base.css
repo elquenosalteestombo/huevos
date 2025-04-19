@@ -1,0 +1,94 @@
+/* app/static/styles/base.css */
+:root {
+    --main-bg: #f5f4f1;
+    --accent: #6D4C41;
+    --light-accent: #c8beb7;
+    --text-color: #2c2c2c;
+    --card-bg: #fafafa;
+}
+
+body {
+    background-color: var(--main-bg);
+    font-family: 'Segoe UI', sans-serif;
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.navbar {
+    background-color: var(--card-bg);
+    border-bottom: 1px solid #d2cfcf;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.navbar-brand {
+    font-weight: 600;
+    color: var(--accent) !important;
+}
+
+.nav-link {
+    color: var(--text-color);
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--accent);
+}
+
+.footer {
+    margin-top: auto;
+    padding: 20px 0;
+    background-color: var(--light-accent);
+    color: #4e342e;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.jumbotron {
+    background-color: var(--card-bg);
+    border: 1px solid #d6d6d6;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.jumbotron h1 {
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+}
+
+.card-body h5 {
+    color: var(--accent);
+}
+
+.egg-card {
+    background-color: var(--card-bg);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
+
+.egg-red {
+    background-color: #fbeaea;
+}
+
+.egg-white {
+    background-color: #e8e9eb;
+}
+
+.main-content {
+    flex: 1;
+    padding-bottom: 2rem;
+}
