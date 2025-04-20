@@ -9,11 +9,11 @@
             <h4>Registrar Huevos</h4>
         </div>
         <div class="card-body">
-            <form id="addEggsForm" action="/api/inventory/add" method="post">
+            <form id="addEggsForm">
                 <div class="row mb-3">
                     <div class="col-md-3">
                         <label for="eggType" class="form-label">Tipo de Huevo</label>
-                        <select class="form-select" id="eggType" name="egg_type" required>
+                        <select class="form-select" id="eggType" required>
                             <option value="">Seleccionar...</option>
                             <option value="red">Rojo</option>
                             <option value="white">Blanco</option>
@@ -21,7 +21,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="eggSize" class="form-label">Tamaño</label>
-                        <select class="form-select" id="eggSize" name="egg_size" required>
+                        <select class="form-select" id="eggSize" required>
                             <option value="">Seleccionar...</option>
                             <option value="A">A</option>
                             <option value="AA">AA</option>
@@ -31,7 +31,7 @@
                     </div>
                     <div class="col-md-3">
                         <label for="quantity" class="form-label">Cantidad</label>
-                        <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+                        <input type="number" class="form-control" id="quantity" min="1" required>
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <button type="submit" class="btn btn-primary w-100">Agregar al Inventario</button>
@@ -62,7 +62,12 @@
     // Function to load inventory data
     function loadInventory() {
         fetch('/api/inventory')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Error al cargar el inventario');
+                }
+                return response.json();
+            })
             .then(data => {
                 const inventoryContainer = document.getElementById('inventoryContainer');
                 const inventoryAlert = document.getElementById('inventoryAlert');
@@ -112,6 +117,7 @@
             })
             .catch(error => {
                 console.error('Error loading inventory:', error);
+                const inventoryAlert = document.getElementById('inventoryAlert');
                 inventoryAlert.textContent = 'Error al cargar el inventario.';
                 inventoryAlert.className = 'alert alert-danger mb-4';
             });
@@ -126,7 +132,12 @@
             },
             body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, quantity: quantity }),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al agregar huevos');
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             loadInventory();
@@ -145,7 +156,12 @@
             },
             body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, new_stock: newStock }),
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al actualizar el inventario');
+            }
+            return response.json();
+        })
         .then(data => {
             alert(data.message);
             loadInventory();

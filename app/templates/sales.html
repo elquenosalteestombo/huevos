@@ -155,8 +155,8 @@
         document.getElementById('salesForm').addEventListener('submit', submitSaleForm);
     });
 
-    // Función para buscar cliente
-    function searchCustomer() {
+   // Función para buscar cliente
+   function searchCustomer() {
         const documentNumber = document.getElementById('documentNumber').value;
         if (!documentNumber) {
             alert('Por favor ingrese un número de documento.');
@@ -164,22 +164,63 @@
         }
 
         fetch(`/api/customers/${documentNumber}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data) {
-                    document.getElementById('customerName').value = data.name;
-                    document.getElementById('customerType').value = data.customer_type;
-                } else {
-                    alert('Cliente no encontrado. Puede registrarlo.');
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Cliente no encontrado');
                 }
+                return response.json();
             })
-            .catch(error => console.error('Error al buscar cliente:', error));
+            .then(data => {
+                document.getElementById('customerName').value = data.name;
+                document.getElementById('customerType').value = data.customer_type;
+            })
+            .catch(error => {
+                alert('Error al buscar cliente: ' + error.message);
+            });
     }
 
     // Función para enviar el formulario de venta
     function submitSaleForm(event) {
         event.preventDefault();
-        // Validar datos y enviar al endpoint `/api/sales`
-        // ...
+
+        const customerDocument = document.getElementById('documentNumber').value;
+        const customerType = document.getElementById('customerType').value;
+
+        const products = [];
+        document.querySelectorAll('.product-row').forEach(row => {
+            const eggType = row.querySelector('.egg-type').value;
+            const eggSize = row.querySelector('.egg-size').value;
+            const unitType = row.querySelector('.unit-type').value;
+            const quantity = parseInt(row.querySelector('.quantity').value);
+
+            products.push({ egg_type: eggType, egg_size: eggSize, unit_type: unitType, quantity });
+        });
+
+        fetch('/api/sales', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ customer_document: customerDocument, items: products }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al registrar la venta');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            // Redirigir o limpiar el formulario
+        })
+        .catch(error => {
+            alert('Error al registrar la venta: ' + error.message);
+        });
     }
+
+    // Event listeners
+    document.getElementById('searchCustomer').addEventListener('click', searchCustomer);
+    document.getElementById('salesForm').addEventListener('submit', submitSaleForm);
+    
+    
 </script>
