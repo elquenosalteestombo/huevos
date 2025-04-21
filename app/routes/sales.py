@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, HTTPException, Body, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 from typing import List, Dict
 from app.models.customer import CustomerType
 from app.models.egg import EggType, EggSize
@@ -7,6 +9,12 @@ from app.database.mongodb import MongoDB
 
 router = APIRouter(tags=["sales"])
 db = MongoDB()
+templates = Jinja2Templates(directory="app/templates")
+
+@router.get("/sales", response_class=HTMLResponse)
+async def sales_page(request: Request):
+    """Renderiza la página de gestión de ventas"""
+    return templates.TemplateResponse("sales.html", {"request": request})
 
 @router.post("/api/customers")
 async def create_customer(customer_data: Dict):
@@ -87,3 +95,27 @@ async def create_sale(
     sale_id = db.create_sale(sale_data)
 
     return {"message": "Venta registrada exitosamente", "sale_id": sale_id}
+
+@router.get("/api/sales/customer/{customer_document}")
+async def get_sales_by_customer(customer_document: str):
+    """Obtiene todas las ventas de un cliente"""
+    sales = db.get_sales_by_customer(customer_document)
+    if not sales:
+        raise HTTPException(status_code=404, detail="No se encontraron ventas para este cliente")
+    return sales
+
+@router.get("/api/sales")
+async def get_all_sales():
+    """Obtiene todas las ventas"""
+    sales = db.get_all_sales()
+    if not sales:
+        raise HTTPException(status_code=404, detail="No se encontraron ventas")
+    return sales
+
+@router.delete("/api/sales/{sale_id}")
+async def delete_sale(sale_id: str):
+    """Elimina una venta"""
+    success = db.delete_sale(sale_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="La venta no existe")
+    return {"message": "Venta eliminada exitosamente"}

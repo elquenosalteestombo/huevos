@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../static/styles/sales.css">
+<link rel="stylesheet" href="/static/styles/sales.css">
 
 <div class="container">
     <div class="row">
@@ -146,17 +146,17 @@
     </div>
 </div>
 
+<!-- ...existing code... -->
+
 <script>
     // JavaScript para manejar la lógica de ventas
     document.addEventListener('DOMContentLoaded', function () {
-        // Cargar inventario y configurar eventos
-        loadInventory();
         document.getElementById('searchCustomer').addEventListener('click', searchCustomer);
         document.getElementById('salesForm').addEventListener('submit', submitSaleForm);
     });
 
-   // Función para buscar cliente
-   function searchCustomer() {
+    // Función para buscar cliente
+    function searchCustomer() {
         const documentNumber = document.getElementById('documentNumber').value;
         if (!documentNumber) {
             alert('Por favor ingrese un número de documento.');
@@ -173,10 +173,82 @@
             .then(data => {
                 document.getElementById('customerName').value = data.name;
                 document.getElementById('customerType').value = data.customer_type;
+
+                // Cargar las ventas del cliente
+                getSalesByCustomer(documentNumber);
             })
             .catch(error => {
                 alert('Error al buscar cliente: ' + error.message);
             });
+    }
+
+    // Función para obtener ventas de un cliente
+    function getSalesByCustomer(customerDocument) {
+        fetch(`/api/sales/customer/${customerDocument}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('No se encontraron ventas para este cliente');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const salesContainer = document.getElementById('customerSalesContainer');
+                salesContainer.innerHTML = '';
+
+                if (data.length > 0) {
+                    data.forEach(sale => {
+                        const saleHtml = `
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h6>Venta ID: ${sale._id}</h6>
+                                    <p><strong>Total:</strong> $${sale.total.toFixed(2)}</p>
+                                    <button class="btn btn-danger btn-sm delete-sale-btn" data-id="${sale._id}">
+                                        Eliminar Venta
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        salesContainer.innerHTML += saleHtml;
+                    });
+
+                    document.querySelectorAll('.delete-sale-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const saleId = this.getAttribute('data-id');
+                            deleteSale(saleId);
+                        });
+                    });
+                } else {
+                    salesContainer.innerHTML = '<p>No se encontraron ventas para este cliente.</p>';
+                }
+            })
+            .catch(error => {
+                alert('Error al obtener las ventas del cliente: ' + error.message);
+            });
+    }
+
+    // Función para eliminar una venta
+    function deleteSale(saleId) {
+        if (!confirm(`¿Está seguro de eliminar la venta con ID ${saleId}?`)) {
+            return;
+        }
+
+        fetch(`/api/sales/${saleId}`, {
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al eliminar la venta');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            const customerDocument = document.getElementById('documentNumber').value;
+            getSalesByCustomer(customerDocument);
+        })
+        .catch(error => {
+            alert('Error al eliminar la venta: ' + error.message);
+        });
     }
 
     // Función para enviar el formulario de venta
@@ -184,8 +256,6 @@
         event.preventDefault();
 
         const customerDocument = document.getElementById('documentNumber').value;
-        const customerType = document.getElementById('customerType').value;
-
         const products = [];
         document.querySelectorAll('.product-row').forEach(row => {
             const eggType = row.querySelector('.egg-type').value;
@@ -211,16 +281,9 @@
         })
         .then(data => {
             alert(data.message);
-            // Redirigir o limpiar el formulario
         })
         .catch(error => {
             alert('Error al registrar la venta: ' + error.message);
         });
     }
-
-    // Event listeners
-    document.getElementById('searchCustomer').addEventListener('click', searchCustomer);
-    document.getElementById('salesForm').addEventListener('submit', submitSaleForm);
-    
-    
 </script>

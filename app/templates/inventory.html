@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="../static/styles/inventory.css">
+<link rel="stylesheet" href="/static/styles/inventory.css">
 
 <div class="container">
     <h2 class="mb-4">Gestión de Inventario de Huevos</h2>
@@ -61,7 +61,7 @@
 <script>
     // Function to load inventory data
     function loadInventory() {
-        fetch('/api/inventory')
+        fetch('/api/inventory') // Ruta ajustada
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Error al cargar el inventario');
@@ -84,7 +84,7 @@
                                     <div class="card-body">
                                         <h5>Huevo ${egg.type === 'red' ? 'Rojo' : 'Blanco'} ${egg.size}</h5>
                                         <p><strong>Stock:</strong> ${egg.stock} unidades</p>
-                                        <div class="input-group">
+                                        <div class="input-group mb-2">
                                             <input type="number" class="form-control form-control-sm update-stock" 
                                                 data-type="${egg.type}" data-size="${egg.size}" 
                                                 value="${egg.stock}" min="0">
@@ -93,6 +93,10 @@
                                                 Actualizar
                                             </button>
                                         </div>
+                                        <button class="btn btn-danger btn-sm delete-btn" 
+                                            data-type="${egg.type}" data-size="${egg.size}">
+                                            Eliminar
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -110,6 +114,14 @@
                             updateEggStock(eggType, eggSize, newStock);
                         });
                     });
+
+                    document.querySelectorAll('.delete-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const eggType = this.getAttribute('data-type');
+                            const eggSize = this.getAttribute('data-size');
+                            deleteEgg(eggType, eggSize);
+                        });
+                    });
                 } else {
                     inventoryAlert.textContent = 'No hay huevos en el inventario.';
                     inventoryAlert.style.display = 'block';
@@ -125,7 +137,7 @@
 
     // Function to add eggs to inventory
     function addEggs(eggType, eggSize, quantity) {
-        fetch('/api/inventory/add', {
+        fetch('/api/inventory/add', { // Ruta ajustada
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -149,7 +161,7 @@
 
     // Function to update egg stock
     function updateEggStock(eggType, eggSize, newStock) {
-        fetch('/api/inventory/update', {
+        fetch('/api/inventory/update', { // Ruta ajustada
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
@@ -168,6 +180,30 @@
         })
         .catch(error => {
             alert('Error al actualizar el inventario: ' + error.message);
+        });
+    }
+
+    // Function to delete eggs from inventory
+    function deleteEgg(eggType, eggSize) {
+        if (!confirm(`¿Está seguro de eliminar el huevo ${eggType} ${eggSize}?`)) {
+            return;
+        }
+
+        fetch(`/api/inventory/delete?egg_type=${eggType}&egg_size=${eggSize}`, { // Ruta ajustada
+            method: 'DELETE',
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al eliminar el huevo');
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            loadInventory();
+        })
+        .catch(error => {
+            alert('Error al eliminar el huevo: ' + error.message);
         });
     }
 
