@@ -530,3 +530,98 @@ label {
 .fade-in {
     animation: fadeIn 0.3s ease forwards;
 }
+
+/* INVENTORY-SPECIFIC STYLES */
+
+/* Inventory Grid Layout */
+#inventoryContainer {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.inventory-card {
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    padding: 1.5rem;
+    transition: var(--transition);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.inventory-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow);
+}
+
+.inventory-card h5 {
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.inventory-card p {
+    margin-bottom: 1rem;
+    color: var(--text-light);
+}
+
+/* Stock Input Group */
+.stock-input-group {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.stock-input-group input {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    text-align: center;
+}
+
+.stock-input-group .btn {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    padding: 0.5rem;
+}
+
+/* Egg Type Badges */
+.egg-type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.egg-type-badge.red {
+    background-color: rgba(239, 83, 80, 0.1);
+    color: #ef5350;
+}
+
+.egg-type-badge.white {
+    background-color: rgba(66, 165, 245, 0.1);
+    color: #42a5f5;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    #inventoryContainer {
+        grid-template-columns: 1fr;
+    }
+    
+    .inventory-card {
+        padding: 1rem;
+    }
+}
+
+/* Animation for inventory updates */
+@keyframes stockUpdate {
+    0% { background-color: rgba(76, 175, 80, 0); }
+    50% { background-color: rgba(76, 175, 80, 0.2); }
+    100% { background-color: rgba(76, 175, 80, 0); }
+}
+
+.stock-updated {
+    animation: stockUpdate 1.5s ease;
+}

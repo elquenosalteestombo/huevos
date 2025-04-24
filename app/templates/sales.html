@@ -146,144 +146,229 @@
     </div>
 </div>
 
-<!-- ...existing code... -->
-
 <script>
-    // JavaScript para manejar la lógica de ventas
-    document.addEventListener('DOMContentLoaded', function () {
-        document.getElementById('searchCustomer').addEventListener('click', searchCustomer);
-        document.getElementById('salesForm').addEventListener('submit', submitSaleForm);
-    });
-
-    // Función para buscar cliente
-    function searchCustomer() {
-        const documentNumber = document.getElementById('documentNumber').value;
-        if (!documentNumber) {
-            alert('Por favor ingrese un número de documento.');
-            return;
-        }
-
-        fetch(`/api/customers/${documentNumber}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Cliente no encontrado');
-                }
-                return response.json();
-            })
-            .then(data => {
-                document.getElementById('customerName').value = data.name;
-                document.getElementById('customerType').value = data.customer_type;
-
-                // Cargar las ventas del cliente
-                getSalesByCustomer(documentNumber);
-            })
-            .catch(error => {
-                alert('Error al buscar cliente: ' + error.message);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Manejar búsqueda de cliente
+        document.getElementById('searchCustomer').addEventListener('click', function() {
+            const docNumber = document.getElementById('documentNumber').value;
+            if (!docNumber) {
+                alert('Ingrese número de documento');
+                return;
+            }
+            
+            fetch(`/api/customers/${docNumber}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Cliente no encontrado');
+                    return response.json();
+                })
+                .then(customer => {
+                    document.getElementById('customerName').value = customer.name;
+                    document.getElementById('customerType').value = customer.customer_type.toLowerCase();
+                    document.getElementById('documentType').value = customer.document_type;
+                    
+                    // Cargar historial de ventas
+                    return fetch(`/api/sales/customer/${docNumber}`);
+                })
+                .then(response => response.json())
+                .then(sales => {
+                    console.log('Historial de ventas:', sales);
+                    // Aquí puedes mostrar el historial si lo deseas
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message);
+                });
+        });
+        
+        // Manejar envío de venta
+        document.getElementById('salesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const customerDoc = document.getElementById('documentNumber').value;
+            if (!customerDoc) {
+                alert('Ingrese documento del cliente');
+                return;
+            }
+            
+            // Recolectar items
+            const items = [];
+            document.querySelectorAll('.product-row').forEach(row => {
+                items.push({
+                    egg_type: row.querySelector('.egg-type').value,
+                    egg_size: row.querySelector('.egg-size').value,
+                    quantity: parseInt(row.querySelector('.quantity').value),
+                    unit_type: row.querySelector('.unit-type').value
+                });
             });
-    }
-
-    // Función para obtener ventas de un cliente
-    function getSalesByCustomer(customerDocument) {
-        fetch(`/api/sales/customer/${customerDocument}`)
+            
+            if (items.length === 0) {
+                alert('Agregue al menos un producto');
+                return;
+            }
+            
+            // Enviar venta
+            fetch('/api/sales', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    customer_document: customerDoc,
+                    items: items
+                })
+            })
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('No se encontraron ventas para este cliente');
-                }
+                if (!response.ok) throw new Error('Error en venta');
                 return response.json();
             })
             .then(data => {
-                const salesContainer = document.getElementById('customerSalesContainer');
-                salesContainer.innerHTML = '';
-
-                if (data.length > 0) {
-                    data.forEach(sale => {
-                        const saleHtml = `
-                            <div class="card mb-3">
-                                <div class="card-body">
-                                    <h6>Venta ID: ${sale._id}</h6>
-                                    <p><strong>Total:</strong> $${sale.total.toFixed(2)}</p>
-                                    <button class="btn btn-danger btn-sm delete-sale-btn" data-id="${sale._id}">
-                                        Eliminar Venta
+                alert(`Venta registrada! Total: $${data.total}`);
+                // Resetear formulario
+                document.getElementById('salesForm').reset();
+                document.getElementById('subtotal').textContent = '$0.00';
+                document.getElementById('iva').textContent = '$0.00';
+                document.getElementById('total').textContent = '$0.00';
+                
+                // Mantener solo un row de producto
+                const container = document.getElementById('productsContainer');
+                container.innerHTML = `
+                    <div class="product-row card mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label">Tipo de Huevo</label>
+                                    <select class="form-select egg-type" required>
+                                        <option value="" selected disabled>Seleccione...</option>
+                                        <option value="red">Rojo</option>
+                                        <option value="white">Blanco</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                    <label class="form-label">Tamaño</label>
+                                    <select class="form-select egg-size" required>
+                                        <option value="" selected disabled>Seleccione...</option>
+                                        <option value="A">A</option>
+                                        <option value="AA">AA</option>
+                                        <option value="B">B</option>
+                                        <option value="EXTRA">EXTRA</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label class="form-label">Unidad</label>
+                                    <select class="form-select unit-type" required>
+                                        <option value="" selected disabled>Seleccione...</option>
+                                        <option value="cubeta">Cubeta (30)</option>
+                                        <option value="dozen" class="natural-only">Docena (12)</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label class="form-label">Cantidad</label>
+                                    <input type="number" class="form-control quantity" min="1" value="1" required>
+                                </div>
+                                <div class="col-md-2 mb-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-danger btn-sm remove-product" style="display: none;">
+                                        <i class="bi bi-trash"></i> Eliminar
                                     </button>
                                 </div>
                             </div>
-                        `;
-                        salesContainer.innerHTML += saleHtml;
-                    });
-
-                    document.querySelectorAll('.delete-sale-btn').forEach(button => {
-                        button.addEventListener('click', function() {
-                            const saleId = this.getAttribute('data-id');
-                            deleteSale(saleId);
-                        });
-                    });
-                } else {
-                    salesContainer.innerHTML = '<p>No se encontraron ventas para este cliente.</p>';
-                }
+                        </div>
+                    </div>
+                `;
             })
             .catch(error => {
-                alert('Error al obtener las ventas del cliente: ' + error.message);
+                alert('Error: ' + error.message);
             });
-    }
-
-    // Función para eliminar una venta
-    function deleteSale(saleId) {
-        if (!confirm(`¿Está seguro de eliminar la venta con ID ${saleId}?`)) {
-            return;
+        });
+        
+        // Manejar agregar producto
+        document.getElementById('addProduct').addEventListener('click', function() {
+            const container = document.getElementById('productsContainer');
+            const newRow = document.createElement('div');
+            newRow.className = 'product-row card mb-3';
+            newRow.innerHTML = `
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select egg-type" required>
+                                <option value="" selected disabled>Seleccione...</option>
+                                <option value="red">Rojo</option>
+                                <option value="white">Blanco</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <select class="form-select egg-size" required>
+                                <option value="" selected disabled>Seleccione...</option>
+                                <option value="A">A</option>
+                                <option value="AA">AA</option>
+                                <option value="B">B</option>
+                                <option value="EXTRA">EXTRA</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            <select class="form-select unit-type" required>
+                                <option value="" selected disabled>Seleccione...</option>
+                                <option value="cubeta">Cubeta (30)</option>
+                                <option value="dozen" class="natural-only">Docena (12)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-2">
+                            <input type="number" class="form-control quantity" min="1" value="1" required>
+                        </div>
+                        <div class="col-md-2 mb-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger btn-sm remove-product">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Mostrar botón de eliminar en todas las filas excepto la primera
+            container.querySelector('.remove-product').style.display = 'block';
+            
+            container.appendChild(newRow);
+            
+            // Actualizar cálculos cuando cambian los productos
+            const inputs = newRow.querySelectorAll('select, input');
+            inputs.forEach(input => {
+                input.addEventListener('change', calculateTotals);
+            });
+        });
+        
+        // Función para calcular totales
+        function calculateTotals() {
+            let subtotal = 0;
+            
+            document.querySelectorAll('.product-row').forEach(row => {
+                const eggType = row.querySelector('.egg-type').value;
+                const eggSize = row.querySelector('.egg-size').value;
+                const unitType = row.querySelector('.unit-type').value;
+                const quantity = parseInt(row.querySelector('.quantity').value) || 0;
+                
+                if (eggType && eggSize && unitType && quantity > 0) {
+                    // Obtener precio (esto es un ejemplo, deberías tener esta lógica)
+                    let price = 0;
+                    if (unitType === 'cubeta') {
+                        price = eggType === 'red' ? 400 : 380; // Precios de ejemplo
+                    } else {
+                        price = eggType === 'red' ? 160 : 150; // Precios de ejemplo
+                    }
+                    
+                    subtotal += price * quantity;
+                }
+            });
+            
+            const iva = subtotal * 0.05;
+            const total = subtotal + iva;
+            
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('iva').textContent = `$${iva.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
         }
-
-        fetch(`/api/sales/${saleId}`, {
-            method: 'DELETE',
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al eliminar la venta');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-            const customerDocument = document.getElementById('documentNumber').value;
-            getSalesByCustomer(customerDocument);
-        })
-        .catch(error => {
-            alert('Error al eliminar la venta: ' + error.message);
+        
+        // Configurar event listeners para cálculos
+        document.querySelectorAll('.egg-type, .egg-size, .unit-type, .quantity').forEach(input => {
+            input.addEventListener('change', calculateTotals);
         });
-    }
-
-    // Función para enviar el formulario de venta
-    function submitSaleForm(event) {
-        event.preventDefault();
-
-        const customerDocument = document.getElementById('documentNumber').value;
-        const products = [];
-        document.querySelectorAll('.product-row').forEach(row => {
-            const eggType = row.querySelector('.egg-type').value;
-            const eggSize = row.querySelector('.egg-size').value;
-            const unitType = row.querySelector('.unit-type').value;
-            const quantity = parseInt(row.querySelector('.quantity').value);
-
-            products.push({ egg_type: eggType, egg_size: eggSize, unit_type: unitType, quantity });
-        });
-
-        fetch('/api/sales', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ customer_document: customerDocument, items: products }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al registrar la venta');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-        })
-        .catch(error => {
-            alert('Error al registrar la venta: ' + error.message);
-        });
-    }
+    });
 </script>

@@ -61,7 +61,7 @@
 <script>
     // Function to load inventory data
     function loadInventory() {
-        fetch('/api/inventory') // Ruta ajustada
+        fetch('/api/inventory')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Error al cargar el inventario');
@@ -104,6 +104,7 @@
                         inventoryContainer.innerHTML += cardHtml;
                     });
 
+                    // Agregar event listeners para actualizar
                     document.querySelectorAll('.update-btn').forEach(button => {
                         button.addEventListener('click', function() {
                             const eggType = this.getAttribute('data-type');
@@ -111,15 +112,56 @@
                             const inputElem = document.querySelector(`.update-stock[data-type="${eggType}"][data-size="${eggSize}"]`);
                             const newStock = parseInt(inputElem.value);
                             
-                            updateEggStock(eggType, eggSize, newStock);
+                            // Usar upsert para actualizar
+                            const eggData = {
+                                type: eggType,
+                                size: eggSize,
+                                stock: newStock
+                            };
+                            
+                            fetch('/api/inventory', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify(eggData)
+                            })
+                            .then(response => {
+                                if (!response.ok) throw new Error('Error al actualizar');
+                                return response.json();
+                            })
+                            .then(data => {
+                                alert('Inventario actualizado correctamente');
+                                loadInventory();
+                            })
+                            .catch(error => {
+                                alert('Error: ' + error.message);
+                            });
                         });
                     });
 
+                    // Agregar event listeners para eliminar
                     document.querySelectorAll('.delete-btn').forEach(button => {
                         button.addEventListener('click', function() {
                             const eggType = this.getAttribute('data-type');
                             const eggSize = this.getAttribute('data-size');
-                            deleteEgg(eggType, eggSize);
+                            
+                            if (confirm(`¿Eliminar huevo ${eggType} ${eggSize}?`)) {
+                                fetch(`/api/inventory/${eggType}/${eggSize}`, {
+                                    method: 'DELETE'
+                                })
+                                .then(response => {
+                                    if (!response.ok) throw new Error('Error al eliminar');
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    alert(data.message);
+                                    loadInventory();
+                                })
+                                .catch(error => {
+                                    alert('Error: ' + error.message);
+                                });
+                            }
                         });
                     });
                 } else {
@@ -136,84 +178,37 @@
     }
 
     // Function to add eggs to inventory
-    function addEggs(eggType, eggSize, quantity) {
-        fetch('/api/inventory/add', { // Ruta ajustada
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, quantity: quantity }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al agregar huevos');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-            loadInventory();
-        })
-        .catch(error => {
-            alert('Error al agregar huevos: ' + error.message);
-        });
-    }
-
-    // Function to update egg stock
-    function updateEggStock(eggType, eggSize, newStock) {
-        fetch('/api/inventory/update', { // Ruta ajustada
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ egg_type: eggType, egg_size: eggSize, new_stock: newStock }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al actualizar el inventario');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-            loadInventory();
-        })
-        .catch(error => {
-            alert('Error al actualizar el inventario: ' + error.message);
-        });
-    }
-
-    // Function to delete eggs from inventory
-    function deleteEgg(eggType, eggSize) {
-        if (!confirm(`¿Está seguro de eliminar el huevo ${eggType} ${eggSize}?`)) {
-            return;
-        }
-
-        fetch(`/api/inventory/delete?egg_type=${eggType}&egg_size=${eggSize}`, { // Ruta ajustada
-            method: 'DELETE',
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Error al eliminar el huevo');
-            }
-            return response.json();
-        })
-        .then(data => {
-            alert(data.message);
-            loadInventory();
-        })
-        .catch(error => {
-            alert('Error al eliminar el huevo: ' + error.message);
-        });
-    }
-
-    // Event listener for form submission
     document.getElementById('addEggsForm').addEventListener('submit', function(event) {
         event.preventDefault();
         const eggType = document.getElementById('eggType').value;
         const eggSize = document.getElementById('eggSize').value;
         const quantity = parseInt(document.getElementById('quantity').value);
-        addEggs(eggType, eggSize, quantity);
+        
+        const eggData = {
+            type: eggType,
+            size: eggSize,
+            stock: quantity
+        };
+        
+        fetch('/api/inventory', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(eggData)
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Error al agregar');
+            return response.json();
+        })
+        .then(data => {
+            alert('Huevo agregado al inventario');
+            document.getElementById('addEggsForm').reset();
+            loadInventory();
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
     });
 
     // Load inventory when page loads

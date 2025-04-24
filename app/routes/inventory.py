@@ -1,13 +1,11 @@
 from fastapi import APIRouter, HTTPException, Body, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from typing import List, Dict
-from app.models.customer import CustomerType
-from app.models.egg import EggType, EggSize
-from app.models.sale import SaleItem
+from typing import List
 from app.database.mongodb import MongoDB
+from app.models.egg import Egg, EggType, EggSize
 
-router = APIRouter(tags=["sales"])
+router = APIRouter(tags=["inventory"])
 db = MongoDB()
 templates = Jinja2Templates(directory="app/templates")
 
@@ -16,90 +14,48 @@ async def inventory_page(request: Request):
     """Renderiza la página de gestión de inventario"""
     return templates.TemplateResponse("inventory.html", {"request": request})
 
-@router.get("/api/inventory")
+
+@router.get("/api/inventory", response_model=List[Egg])
 async def get_inventory():
     """Obtiene todos los huevos en el inventario"""
-    inventory = list(db.get_collection("eggs").find({}, {"_id": 0}))
-    if not inventory:
-        raise HTTPException(status_code=404, detail="No hay huevos en el inventario")
-    return inventory
+    inventory = db.get_all_eggs()
+    return [Egg(**egg) for egg in inventory]  # incluso si inventory es []
 
-@router.post("/api/customers")
-async def create_customer(customer_data: Dict):
-    """Crea un nuevo cliente"""
-    existing_customer = db.get_collection("customers").find_one({"document_number": customer_data["document_number"]})
-    if existing_customer:
-        raise HTTPException(status_code=400, detail="El cliente ya existe")
+
+@router.post("/api/inventory", response_model=Egg)
+async def add_or_update_egg(egg: Egg):
+    """Añade o actualiza un huevo en el inventario"""
+    egg_data = egg.dict()
+    success = db.upsert_egg(egg_data)
+    if not success:
+        raise HTTPException(status_code=500, detail="Error al actualizar el inventario")
     
-    customer_id = db.create_customer(customer_data)
-    return {"message": "Cliente creado exitosamente", "customer_id": customer_id}
+    return Egg(**egg_data)
 
-@router.get("/api/customers/{document_number}")
-async def get_customer(document_number: str):
-    """Obtiene un cliente por su número de documento"""
-    customer = db.get_collection("customers").find_one({"document_number": document_number}, {"_id": 0})
-    if not customer:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    return customer
-
-@router.post("/api/sales")
-async def create_sale(
-    customer_document: str = Body(...),
-    items: List[Dict] = Body(...)
-):
-    """Registra una nueva venta"""
-    customer = db.get_collection("customers").find_one({"document_number": customer_document})
-    if not customer:
-        raise HTTPException(status_code=404, detail="Cliente no encontrado")
-    
-    sale_items = []
-    subtotal = 0.0
-
-    for item in items:
-        egg_type = item["egg_type"]
-        egg_size = item["egg_size"]
-        quantity = item["quantity"]
-        unit_type = item["unit_type"]
-
-        # Validar stock
-        egg = db.get_collection("eggs").find_one({"type": egg_type, "size": egg_size})
-        if not egg or egg["stock"] < quantity:
-            raise HTTPException(
-                status_code=400,
-                detail=f"No hay suficiente stock para {egg_type} {egg_size}"
-            )
-
-        # Actualizar stock
-        db.get_collection("eggs").update_one(
-            {"type": egg_type, "size": egg_size},
-            {"$inc": {"stock": -quantity}}
+@router.delete("/api/inventory/{egg_type}/{size}")
+async def remove_egg(egg_type: EggType, size: EggSize):
+    """Elimina un huevo del inventario"""
+    success = db.delete_egg(egg_type.value, size.value)
+    if not success:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No se encontró huevo tipo {egg_type} tamaño {size}"
         )
+    return {"message": "Huevo eliminado exitosamente"}
 
-        # Calcular subtotal
-        unit_price = 30 if unit_type == "cubeta" else 12
-        subtotal += unit_price * quantity
-
-        sale_items.append(SaleItem(
-            egg_type=egg_type,
-            egg_size=egg_size,
-            quantity=quantity,
-            unit_type=unit_type,
-            unit_price=unit_price
-        ).dict())
-
-    # Calcular IVA y total
-    iva = subtotal * 0.05
-    total = subtotal + iva
-
-    # Guardar la venta en la base de datos
-    sale_data = {
-        "customer_id": customer["_id"],
-        "customer_name": customer["name"],
-        "items": sale_items,
-        "subtotal": subtotal,
-        "iva": iva,
-        "total": total
+@router.get("/api/inventory/price/{egg_type}/{size}")
+async def get_egg_prices(egg_type: EggType, size: EggSize):
+    """Obtiene los precios de un tipo y tamaño de huevo"""
+    eggs = db.get_egg_stock_by_type_and_size(egg_type.value, size.value)
+    if not eggs:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No hay huevos tipo {egg_type} tamaño {size} en el inventario"
+        )
+    
+    egg_model = Egg(**eggs[0])
+    return {
+        "unit_price": egg_model.get_price_per_unit(),
+        "dozen_price": egg_model.get_price_per_dozen(),
+        "cubeta_price": egg_model.get_price_per_cubeta()
     }
-    sale_id = db.create_sale(sale_data)
-
-    return {"message": "Venta registrada exitosamente", "sale_id": sale_id}
