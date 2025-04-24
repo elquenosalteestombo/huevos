@@ -16,6 +16,17 @@
                 </div>
                 <div class="card-body">
                     <form id="salesForm">
+                        <div class="mt-4">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5>Historial de Ventas</h5>
+                                <button type="button" class="btn btn-secondary btn-sm" id="refreshSales">
+                                    <i class="bi bi-arrow-clockwise"></i> Refrescar
+                                </button>
+                            </div>
+                            <ul id="salesHistory" class="list-group">
+                                <!-- Aquí se agregarán las ventas -->
+                            </ul>
+                        </div>
                         <!-- Información del Cliente -->
                         <div class="mb-4">
                             <h5>Información del Cliente</h5>
@@ -48,6 +59,11 @@
                                 <div class="col-md-6 mb-3">
                                     <label for="customerName" class="form-label">Nombre del Cliente</label>
                                     <input type="text" class="form-control" id="customerName" required>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <button type="button" class="btn btn-success" id="createCustomer">
+                                        <i class="bi bi-person-plus"></i> Crear Cliente
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -170,10 +186,18 @@
                     return fetch(`/api/sales/customer/${docNumber}`);
                 })
                 .then(response => response.json())
+                
                 .then(sales => {
-                    console.log('Historial de ventas:', sales);
-                    // Aquí puedes mostrar el historial si lo deseas
-                })
+                         const salesHistory = document.getElementById('salesHistory');
+                        salesHistory.innerHTML = ''; // Limpiar historial previo
+                            sales.forEach(sale => {
+                                const listItem = document.createElement('li');
+                                listItem.className = 'list-group-item';
+                                listItem.textContent = `Venta ID: ${sale.id}, Total: $${sale.total}`;
+                                salesHistory.appendChild(listItem);
+                                 });
+                             })
+                
                 .catch(error => {
                     console.error('Error:', error);
                     alert(error.message);
@@ -370,5 +394,111 @@
         document.querySelectorAll('.egg-type, .egg-size, .unit-type, .quantity').forEach(input => {
             input.addEventListener('change', calculateTotals);
         });
+       
+        // Manejar cambio de tipo de cliente
+        document.getElementById('customerType').addEventListener('change', function() {
+            const customerType = this.value;
+            const unitTypeSelects = document.querySelectorAll('.unit-type');
+
+            unitTypeSelects.forEach(select => {
+                const dozenOption = select.querySelector('option[value="dozen"]');
+                if (customerType === 'juridical') {
+                    dozenOption.disabled = true; // Deshabilitar "docena"
+                    if (select.value === 'dozen') {
+                        select.value = ''; // Resetear si ya estaba seleccionada
+                    }
+                } else {
+                    dozenOption.disabled = false; // Habilitar "docena"
+                }
+            });
+        });
+    
+
+        // Manejar eliminación de producto
+        document.getElementById('productsContainer').addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-product')) {
+                const productRow = e.target.closest('.product-row');
+                productRow.remove();
+                calculateTotals(); // Recalcular totales al eliminar un producto
+            }
+        });
+        document.getElementById('createCustomer').addEventListener('click', function() {
+    const nombre = document.getElementById('customerName').value;
+    const tipoCliente = document.getElementById('customerType').value;
+    const tipoDocumento = document.getElementById('documentType').value;
+    const numeroDocumento = document.getElementById('documentNumber').value;
+
+    if (!nombre || !tipoCliente || !tipoDocumento || !numeroDocumento) {
+        alert('Por favor, complete todos los campos del cliente.');
+        return;
+    }
+
+    fetch('/api/customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            name: nombre,
+            customer_type: tipoCliente,
+            document_type: tipoDocumento,
+            document_number: numeroDocumento
+        })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('Error al crear el cliente');
+        return response.json();
+    })
+    .then(data => {
+        alert('Cliente creado exitosamente');
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('No se pudo crear el cliente: ' + error.message);
     });
+});
+
+document.getElementById('refreshSales').addEventListener('click', function() {
+    const docNumber = document.getElementById('documentNumber').value;
+    if (!docNumber) {
+        alert('Ingrese el número de documento del cliente para refrescar el historial.');
+        return;
+    }
+
+    fetch(`/api/sales/customer/${docNumber}`)
+        .then(response => {
+            if (!response.ok) throw new Error('No se pudieron obtener las ventas.');
+            return response.json();
+        })
+        .then(sales => {
+            const salesHistory = document.getElementById('salesHistory');
+            salesHistory.innerHTML = ''; // Limpiar historial previo
+            sales.forEach(sale => {
+                const listItem = document.createElement('li');
+                listItem.className = 'list-group-item';
+                listItem.textContent = `Venta ID: ${sale.id}, Total: $${sale.total}`;
+                salesHistory.appendChild(listItem);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al refrescar el historial de ventas: ' + error.message);
+        });
+        });
+    });
+
+    function validateStock(eggType, eggSize, quantity, callback) {
+        fetch(`/api/inventory/${eggType}/${eggSize}`)
+            .then(response => {
+                if (!response.ok) throw new Error('Error al validar stock');
+                return response.json();
+            })
+            .then(stock => {
+                if (stock.stock < quantity) {
+                    alert('No hay suficiente stock disponible');
+                    callback(false);
+                } else {
+                    callback(true);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>

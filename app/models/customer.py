@@ -10,5 +10,5 @@ class Customer(BaseModel):
     document_type: str  # "CC" for natural persons, "NIT" for juridical
     document_number: str
     customer_type: CustomerType
-    contact_phone: str = None
-    email: str = None
+    
+    

@@ -152,3 +152,6 @@ async def get_all_sales():
     if not sales:
         raise HTTPException(status_code=404, detail="No se encontraron ventas")
     return [Sale(**sale) for sale in sales]
+
+
+    

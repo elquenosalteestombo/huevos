@@ -406,8 +406,9 @@ h2 {
 
 /* Customer Type Specific Styles */
 .natural-only {
-    display: none;
+    display: block !important;
 }
+
 
 .customer-type-natural .natural-only {
     display: block !important;
@@ -439,4 +440,23 @@ h2 {
 
 .sale-complete-animation {
     animation: saleComplete 0.5s ease;
+}
+
+/* Deshabilitar opciones de "Docena" para personas jurídicas */
+select.unit-type option[value="dozen"]:disabled {
+    display: none; /* Ocultar la opción deshabilitada */
+}
+
+/* Mostrar opciones específicas para personas naturales */
+.customer-type-natural .natural-only {
+    display: block !important;
+}
+
+/* Asegurar que las opciones deshabilitadas sean visualmente diferentes */
+select:disabled {
+    background-color: #e9ecef;
+    cursor: not-allowed;
+}
+#refreshSales {
+    margin-left: auto;
 }

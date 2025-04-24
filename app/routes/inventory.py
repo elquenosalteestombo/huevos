@@ -59,3 +59,10 @@ async def get_egg_prices(egg_type: EggType, size: EggSize):
         "dozen_price": egg_model.get_price_per_dozen(),
         "cubeta_price": egg_model.get_price_per_cubeta()
     }
+@router.get("/api/inventory/{egg_type}/{egg_size}")
+async def get_stock(egg_type: EggType, egg_size: EggSize):
+    """Obtiene el stock disponible para un tipo y tamaño de huevo"""
+    stock = db.get_egg_stock_by_type_and_size(egg_type, egg_size)
+    if stock is None:
+        raise HTTPException(status_code=404, detail="Stock no encontrado")
+    return {"stock": stock}
