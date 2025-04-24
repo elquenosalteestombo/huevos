@@ -7,6 +7,7 @@ from app.database.mongodb import MongoDB
 from app.models.customer import Customer, CustomerType
 from app.models.egg import Egg, EggType, EggSize
 from app.models.sale import Sale, SaleItem, SaleUnitType
+from bson import ObjectId
 
 router = APIRouter(tags=["sales"])
 db = MongoDB()
@@ -153,5 +154,36 @@ async def get_all_sales():
         raise HTTPException(status_code=404, detail="No se encontraron ventas")
     return [Sale(**sale) for sale in sales]
 
+@router.delete("/api/sales/{sale_id}")
+async def delete_sale(sale_id: str):
+    try:
+        # Pasa el ID como string directamente al método delete_sale
+        result = db.delete_sale(sale_id)
+        if not result:
+            raise HTTPException(status_code=404, detail="Venta no encontrada")
+        return {"message": "Venta eliminada exitosamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al eliminar la venta: {str(e)}")
+
+
+@router.delete("/api/customers/{document_number}", status_code=204)
+async def delete_customer(document_number: str):
+    """Elimina un cliente por su número de documento"""
+    # Verificar si el cliente tiene ventas asociadas
+    sales = db.get_sales_by_customer(document_number)
+    if sales:
+        raise HTTPException(status_code=400, detail="No se puede eliminar el cliente porque tiene ventas asociadas")
+
+    result = db.delete_customer(document_number)
+    if not result:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return {"message": "Cliente eliminado exitosamente"}
+
 
     
+
+
+
+
+
+

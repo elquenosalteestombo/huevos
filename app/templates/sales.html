@@ -22,10 +22,21 @@
                                 <button type="button" class="btn btn-secondary btn-sm" id="refreshSales">
                                     <i class="bi bi-arrow-clockwise"></i> Refrescar
                                 </button>
+                                
+                                
                             </div>
                             <ul id="salesHistory" class="list-group">
                                 <!-- Aquí se agregarán las ventas -->
                             </ul>
+                            <div class="mt-4">
+                                <h5>Eliminar Venta por ID</h5>
+                                <div class="input-group mb-3">
+                                    <input type="text" class="form-control" id="saleIdToDelete" placeholder="Ingrese el ID de la venta">
+                                    <button class="btn btn-danger" id="deleteSaleById">
+                                        <i class="bi bi-trash"></i> Eliminar Venta
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <!-- Información del Cliente -->
                         <div class="mb-4">
@@ -63,6 +74,9 @@
                                 <div class="text-center mt-3">
                                     <button type="button" class="btn btn-success" id="createCustomer">
                                         <i class="bi bi-person-plus"></i> Crear Cliente
+                                    </button>
+                                    <button type="button" class="btn btn-danger" id="deleteCustomer">
+                                        <i class="bi bi-trash"></i> Eliminar Cliente
                                     </button>
                                 </div>
                             </div>
@@ -186,17 +200,45 @@
                     return fetch(`/api/sales/customer/${docNumber}`);
                 })
                 .then(response => response.json())
-                
+
                 .then(sales => {
-                         const salesHistory = document.getElementById('salesHistory');
-                        salesHistory.innerHTML = ''; // Limpiar historial previo
-                            sales.forEach(sale => {
-                                const listItem = document.createElement('li');
-                                listItem.className = 'list-group-item';
-                                listItem.textContent = `Venta ID: ${sale.id}, Total: $${sale.total}`;
-                                salesHistory.appendChild(listItem);
-                                 });
-                             })
+    const salesHistory = document.getElementById('salesHistory');
+    salesHistory.innerHTML = ''; // Limpiar historial previo
+    sales.forEach(sale => {
+        const listItem = document.createElement('li');
+        listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+        listItem.innerHTML = `
+            Venta ID: ${sale.id}, Total: $${sale.total}
+            <button class="btn btn-danger btn-sm delete-sale" data-sale-id="${sale.id}">
+                <i class="bi bi-trash"></i> Eliminar
+            </button>
+        `;
+        salesHistory.appendChild(listItem);
+    });
+
+    // Agregar eventos a los botones "Eliminar"
+    document.querySelectorAll('.delete-sale').forEach(button => {
+        button.addEventListener('click', function() {
+            const saleId = this.getAttribute('data-sale-id');
+            if (confirm('¿Está seguro de que desea eliminar esta venta?')) {
+                fetch(`/api/sales/${saleId}`, {
+                    method: 'DELETE'
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('No se pudo eliminar la venta');
+                    alert('Venta eliminada exitosamente');
+                    this.closest('li').remove(); // Eliminar la venta del historial
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al eliminar la venta: ' + error.message);
+                });
+            }
+        });
+    });
+})
+
+
                 
                 .catch(error => {
                     console.error('Error:', error);
@@ -434,26 +476,33 @@
     }
 
     fetch('/api/customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            name: nombre,
-            customer_type: tipoCliente,
-            document_type: tipoDocumento,
-            document_number: numeroDocumento
-        })
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+        name: nombre,
+        customer_type: tipoCliente,
+        document_type: tipoDocumento,
+        document_number: numeroDocumento
     })
-    .then(response => {
-        if (!response.ok) throw new Error('Error al crear el cliente');
-        return response.json();
-    })
-    .then(data => {
-        alert('Cliente creado exitosamente');
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('No se pudo crear el cliente: ' + error.message);
-    });
+})
+.then(response => {
+    if (!response.ok) {
+        // Si el código de estado no es 2xx, lanza un error
+        return response.json().then(err => {
+            throw new Error(err.detail || 'Error desconocido al crear el cliente');
+        });
+    }
+    return response.json();
+})
+.then(data => {
+    alert(data.message || 'Cliente creado exitosamente');
+})
+.catch(error => {
+    console.error('Error:', error);
+    alert('No se pudo crear el cliente: ' + error.message);
+});
+    
+    
 });
 
 document.getElementById('refreshSales').addEventListener('click', function() {
@@ -483,6 +532,62 @@ document.getElementById('refreshSales').addEventListener('click', function() {
             alert('Error al refrescar el historial de ventas: ' + error.message);
         });
         });
+
+        document.getElementById('deleteCustomer').addEventListener('click', function() {
+    const docNumber = document.getElementById('documentNumber').value;
+    if (!docNumber) {
+        alert('Ingrese el número de documento del cliente para eliminarlo.');
+        return;
+    }
+
+    if (confirm('¿Está seguro de que desea eliminar este cliente? Esta acción no se puede deshacer.')) {
+        fetch(`/api/customers/${docNumber}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 400) {
+                    throw new Error('El cliente tiene ventas asociadas y no se puede eliminar.');
+                }
+                throw new Error('No se pudo eliminar el cliente');
+            }
+            alert('Cliente eliminado exitosamente');
+            // Limpiar el formulario
+            document.getElementById('salesForm').reset();
+            document.getElementById('salesHistory').innerHTML = ''; // Limpiar historial de ventas
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar el cliente: ' + error.message);
+             });
+            }
+        });
+
+        document.getElementById('deleteSaleById').addEventListener('click', function() {
+    const saleId = document.getElementById('saleIdToDelete').value.trim();
+    if (!saleId) {
+        alert('Por favor, ingrese el ID de la venta que desea eliminar.');
+        return;
+    }
+
+    if (confirm(`¿Está seguro de que desea eliminar la venta con ID ${saleId}?`)) {
+        fetch(`/api/sales/${saleId}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('No se pudo eliminar la venta. Verifique el ID.');
+            alert('Venta eliminada exitosamente.');
+            document.getElementById('saleIdToDelete').value = ''; // Limpiar el campo de entrada
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar la venta: ' + error.message);
+        });
+    }
+});
+
+
+        
     });
 
     function validateStock(eggType, eggSize, quantity, callback) {

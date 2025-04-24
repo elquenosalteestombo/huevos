@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from typing import Dict, Any, List
+from bson import ObjectId 
 
 # Carga las variables del archivo .env
 load_dotenv()
@@ -20,6 +21,7 @@ class MongoDB:
 
     def get_collection(self, collection_name: str) -> Collection:
         return self.db[collection_name]
+
 
 
     # -------------------------------
@@ -93,8 +95,14 @@ class MongoDB:
         return list(self.get_collection("sales").find({}, {"_id": 0}))
 
     def delete_sale(self, sale_id: str) -> bool:
-        result = self.get_collection("sales").delete_one({"_id": sale_id})
-        return result.deleted_count > 0
+        try:
+            # Busca por el campo "id" en lugar de "_id"
+            result = self.get_collection("sales").delete_one({"id": sale_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            # Maneja errores si el ID no es válido
+            print(f"Error al eliminar la venta: {e}")
+            return False
 
     def calculate_total_sales(self) -> float:
         total = 0.0
@@ -102,3 +110,6 @@ class MongoDB:
         for sale in sales:
             total += sale.get("total", 0)
         return total
+
+
+
